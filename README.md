@@ -4,6 +4,12 @@ The **DSC-Helper** Module is created to simplify the creation of an environment 
 This Module contains helper scripts and multiple composite resources to implement Role Based DSC in an easy way.
 Do not use this helper in Production out of the box, since it uses unencrypted passwords!
 
+## Examples
+```powershell
+Push-DSCRoleConfiguration -Nodename localhost -skipmodules
+Push-DSCRoleConfiguration -Nodename Server1
+```
+
 ## DSC Requirements
 *All relying DSC resources to make use of the DSC Configurations:*
 * **Windows Management Framework 5.0**: Required because the PSDSCRunAsCredential DSC Resource parameter is needed.
