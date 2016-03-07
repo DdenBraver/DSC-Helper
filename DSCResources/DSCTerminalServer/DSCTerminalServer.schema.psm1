@@ -117,7 +117,7 @@
             CollectionDescription = $CollectionDescription
             SessionHost = $FQDN
             ConnectionBroker = $FQDN
-            DependsOn = '[cRDSessionDeployment]Deployment'
+            DependsOn = '[xRDSessionDeployment]Deployment'
         }
 
         xRDSessionCollectionConfiguration CollectionConfiguration
@@ -127,7 +127,7 @@
             ConnectionBroker = $FQDN   
             TemporaryFoldersDeletedOnExit = $false
             SecurityLayer = 'SSL'
-            DependsOn = '[cRDSessionCollection]Collection'
+            DependsOn = '[xRDSessionCollection]Collection'
         }
 
         xRDRemoteApp Mstsc
@@ -136,7 +136,7 @@
             DisplayName = 'Remote Desktop'
             FilePath = 'C:\Windows\System32\mstsc.exe'
             Alias = 'mstsc'
-            DependsOn = '[cRDSessionCollection]Collection'
+            DependsOn = '[xRDSessionCollection]Collection'
         }
     }
 }
