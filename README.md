@@ -12,8 +12,8 @@ Do not use this helper in Production out of the box, since it uses unencrypted p
 * **xNetworking**
 * **xRemoteDesktopSessionHost**
 * **xSmbshare**
-* **cSQLServer**
-* **cFailoverCluster**
+* **cSQLServer** : https://github.com/DdenBraver/cSQLServer
+* **cFailoverCluster** : https://github.com/DdenBraver/cFailOverCluster
 
 ## DSC Roles
 
