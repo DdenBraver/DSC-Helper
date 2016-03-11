@@ -1,8 +1,9 @@
-﻿configuration DSCLCMPushApplyOnly
+﻿[DSCLocalconfigurationmanager()]
+configuration DSCLCMPushApplyOnly
 {
     Node $Allnodes.NodeName
     {
-        LocalConfigurationManager 
+        Settings 
         {
             RefreshMode                    = 'PUSH'
             RebootNodeIfNeeded             = $true

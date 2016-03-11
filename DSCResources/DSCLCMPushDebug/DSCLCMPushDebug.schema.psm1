@@ -1,11 +1,12 @@
-﻿configuration DSCLCMPushDebug
+﻿[DSCLocalconfigurationmanager()]
+configuration DSCLCMPushDebug
 {
     Node $Allnodes.NodeName
     {
-        LocalConfigurationManager 
+        Settings 
         {
             RefreshMode                    = 'PUSH'
-            RebootNodeIfNeeded             = $true
+            RebootNodeIfNeeded             = $false
             ActionAfterReboot              = 'StopConfiguration'
             RefreshFrequencyMins           = 30
             ConfigurationModeFrequencyMins = 30 

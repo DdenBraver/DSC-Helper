@@ -130,6 +130,26 @@ Function Show-Dropdownbox
 }
 Function Push-DSCRoleConfiguration
 {
+    <#
+            .SYNOPSIS
+            Pushes a DSC Role Configuration to a server.
+            .DESCRIPTION
+            The Push-DSCRoleConfiguration function will copy over your local modules over to the target server, and will push the selected DSC Role over to this server.
+            .PARAMETER Nodename
+            The server you want to configure
+            .PARAMETER LocalAdministrator
+            The local administrator account of the server
+            .PARAMETER PullserverDNS
+            The Pull Server DNS (currently not in use! Future feature)
+            .PARAMETER skipmodules
+            Boolean: Skips the copy modules step
+            .EXAMPLE
+            Push-DSCRoleConfiguration -Nodename Server1
+            .NOTES
+            This function was created to help people get started with DSC. It uses composite resources in the module to push a "Role" to a server using Desired State Configuration.
+            Once the role is selected and the parameters are filled, it will send over the configuration and make it happen.
+    #>
+
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Nodename,
@@ -373,6 +393,23 @@ Function Trace-Reboot
 }
 function Install-RemoteMSI
 {
+    <#
+            .SYNOPSIS
+            Install a MSI on a Remote Server
+            .DESCRIPTION
+            This function will attempt to install a remote MSI on a server
+            .PARAMETER Computername
+            The node name of the System
+            .PARAMETER Credentials
+            The credentials that have administrator permissions on the server
+            .PARAMETER SourceDirectory
+            The directory containing the MSI's you want to install
+            .PARAMETER DestinationDirectory
+            The directory the files will be temporary placed
+            .EXAMPLE
+            Install-RemoteMSI -Computername Server1 -sourcedirectory 'C:\Temp\MSIs' -destinationdirectory 'c:\Temp'
+    #>
+
     param (
         [Parameter(Mandatory = $true)]
         [String]$ComputerName,
@@ -464,6 +501,25 @@ function Install-RemoteMSI
 }
 function Install-RemoteCertificate
 {
+    <#
+            .SYNOPSIS
+            Install a PFX Certificate on a Remote Server
+            .DESCRIPTION
+            This function will attempt to install a PFX Certificate on a remote server
+            .PARAMETER Computername
+            The node name of the System
+            .PARAMETER Credentials
+            The credentials that have administrator permissions on the server
+            .PARAMETER SourceDirectory
+            The file containing the PFX you want to install
+            .PARAMETER DestinationDirectory
+            The destination the PFX will be temporary placed
+            .PARAMETER PFXPassword
+            The password required for the PFX Certificate
+            .EXAMPLE
+            Install-RemoteMSI -Computername Server1 -sourcedirectory 'C:\Temp\Certificate.pfx' -destinationdirectory 'c:\Temp\certificate.pfx'
+    #>
+
     param(
     [Parameter(Mandatory = $true)]
     [String]$Computername,
@@ -539,6 +595,19 @@ function Install-RemoteCertificate
 }
 function Remove-Host
 {
+    <#
+            .SYNOPSIS
+            Remove an entry from the windows hosts file.
+            .DESCRIPTION
+            Remove an entry from the windows hosts file at c:\windows\system32\drivers\etc\hosts
+            .PARAMETER hostsfile
+            The file you wish to manipulate (Default: c:\windows\system32\drivers\etc\hosts)
+            .PARAMETER Hostname
+            The DNS name of the host/server you wish to remove
+            .EXAMPLE
+            Remove-Host -Hostname Server1
+    #>
+
      param
      (
          [Parameter(Mandatory = $false)]
@@ -576,6 +645,21 @@ function Remove-Host
 } 
 function Add-Host
 {
+    <#
+            .SYNOPSIS
+            Add an entry from the windows hosts file.
+            .DESCRIPTION
+            Remove an entry from the windows hosts file at c:\windows\system32\drivers\etc\hosts
+            .PARAMETER hostsfile
+            The file you wish to manipulate (Default: c:\windows\system32\drivers\etc\hosts)
+            .PARAMETER IPAddress
+            The IP address of the host/server you wish to add           
+            .PARAMETER Hostname
+            The DNS name of the host/server you wish to add
+            .EXAMPLE
+            Remove-Host -Hostname Server1
+    #>
+
      param
      (
          [Parameter(Mandatory = $false)]
