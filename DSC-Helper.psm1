@@ -216,7 +216,7 @@ Function Push-DSCRoleConfiguration
     & $RoleSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
 
     Set-DscLocalConfigurationManager -Path C:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Verbose
-    Start-DscConfiguration -Path c:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Force -Verbose -Wait
+    Start-DscConfiguration -Path c:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Force -Verbose
 
     if (!$ping)
     {
