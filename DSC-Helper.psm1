@@ -163,7 +163,10 @@ Function Push-DSCRoleConfiguration
         [switch]$skipmodules
     )
 
-    Set-item wsman:localhost\client\trustedhosts -value * -Force
+    $wsmanvalue = (Get-Item wsman:localhost\client\trustedhosts).value
+
+    # temporary grant the nodename as wsman trusted host value
+    Set-item wsman:localhost\client\trustedhosts -value $Nodename -Force
 
     $dnsresolve = (Resolve-DnsName -Name $Nodename -ErrorAction SilentlyContinue) -eq $null
     if ($dnsresolve)
@@ -177,52 +180,70 @@ Function Push-DSCRoleConfiguration
         Write-Verbose -Message "$($Nodename): Server was found using DNS" -Verbose
     }
 
-    if (!$PullserverDNS -and !$skipmodules)
-    {
-        Write-Verbose -Message "$($Nodename): Enabling File and Printer Sharing" -Verbose
-        Invoke-Command -ComputerName $Nodename -Credential $LocalAdministrator -ScriptBlock {
-            Enable-NetFirewallRule -Name 'FPS-SMB-In-TCP'
-        }
-        
-        Write-Verbose -Message "$($Nodename): Copying DSC Modules" -verbose
-        $null = net.exe use "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" $LocalAdministrator.GetNetworkCredential().password /User:$($LocalAdministrator.username)
-        $null = Get-ChildItem 'C:\Program Files\WindowsPowerShell\Modules' | Where-Object {$_.name -ne 'PackageManagement' -and $_.name -ne 'PowerShellGet'} | copy-item -Destination "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" -Force -Recurse
-        $null = net.exe use "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" /delete
+    $DSCHelperResources = Get-DscResource -Module DSC-Helper
 
+    if (!$PullserverDNS)
+    {
+        if (!$skipmodules)
+        {
+            Write-Verbose -Message "$($Nodename): Enabling File and Printer Sharing" -Verbose
+            Invoke-Command -ComputerName $Nodename -Credential $LocalAdministrator -ScriptBlock `
+            {
+                Enable-NetFirewallRule -Name 'FPS-SMB-In-TCP'
+            }
+
+            Write-Verbose -Message "$($Nodename): Copying Powershell Modules" -verbose
+            $null = net.exe use "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" $LocalAdministrator.GetNetworkCredential().password /User:$($LocalAdministrator.username)
+            $null = Get-ChildItem 'C:\Program Files\WindowsPowerShell\Modules' | Where-Object {$_.name -ne 'PackageManagement' -and $_.name -ne 'PowerShellGet'} | copy-item -Destination "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" -Force -Recurse
+            $null = net.exe use "\\$Nodename\C$\Program Files\WindowsPowerShell\Modules" /delete
+        }
         $configdata = Get-ConfigurationData -Nodename $Nodename -LocalAdministrator $LocalAdministrator
+
+        $LCMOption = ($DSCHelperResources | Where-Object -FilterScript {
+                $_.Name -like 'DSCLCMPush*'
+        }).Name
+        $LCMOption = $LCMOption.SubString(3)
+        $LCMSelection = Show-Dropdownbox -Question 'Please select your Configuration Option:' -Answers $LCMOption
+        $LCMSelection = 'DSC' + $LCMSelection
+
+        & $LCMSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
+   
+        $DSCRoles = ($DSCHelperResources | Where-Object -FilterScript {
+                $_.Name -like '*ROLE*'
+        }).Name
+        $DSCRoles = $DSCRoles.SubString(7)
+        $RoleSelection = Show-Dropdownbox -Question 'Please select your Role:' -Answers $DSCRoles
+        $RoleSelection = 'DSCRole' + $RoleSelection
+
+        & $RoleSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
+
+        Set-DscLocalConfigurationManager -Path C:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Verbose
+        Start-DscConfiguration -Path c:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Force -Verbose
     }
     else
     {
         $configdata = Get-ConfigurationData -Nodename $Nodename -PullserverDNS $PullserverDNS -LocalAdministrator $LocalAdministrator
+
+        $LCMOption = ($DSCHelperResources | Where-Object -FilterScript {
+                $_.Name -like 'DSCLCMPull*'
+        }).Name
+        $LCMOption = $LCMOption.SubString(3)
+        $LCMSelection = Show-Dropdownbox -Question 'Please select your Configuration Option:' -Answers $LCMOption
+        $LCMSelection = 'DSC' + $LCMSelection
+
+        & $LCMSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
+
+        Write-Verbose -Message "$($Nodename): ConfigurationID is set to $($configdata.AllNodes.ConfigurationID)" -Verbose
     }
 
-    $DSCHelperResources = Get-DscResource -Module DSC-Helper
-
-    $LCMOption = ($DSCHelperResources | Where-Object -FilterScript {
-            $_.Name -like '*PUSH*' -and $_.Name -notlike '*secure*'
-    }).Name
-    $LCMOption = $LCMOption.SubString(3)
-    $LCMSelection = Show-Dropdownbox -Question 'Please select your Configuration Option:' -Answers $LCMOption
-    $LCMSelection = 'DSC' + $LCMSelection
-    
-    $DSCRoles = ($DSCHelperResources | Where-Object -FilterScript {
-            $_.Name -like '*ROLE*'
-    }).Name
-    $DSCRoles = $DSCRoles.SubString(7)
-    $RoleSelection = Show-Dropdownbox -Question 'Please select your Role:' -Answers $DSCRoles
-    $RoleSelection = 'DSCRole' + $RoleSelection
-
-    & $LCMSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
-    & $RoleSelection -ConfigurationData $configdata -OutputPath 'c:\dsc\staging'
-
-    Set-DscLocalConfigurationManager -Path C:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Verbose
-    Start-DscConfiguration -Path c:\dsc\staging -ComputerName $Nodename -Credential $LocalAdministrator -Force -Verbose
-
-    if (!$ping)
+    if ($dnsresolve)
     {
         Write-Verbose -Message "$($Nodename): Cleaning up hosts file" -Verbose
         Remove-Host -Hostname $Nodename -Verbose
     }
+
+    # restore wsman trusted host value
+    Set-item wsman:localhost\client\trustedhosts -value $wsmanvalue -Force
 }
 function Send-File
 {
